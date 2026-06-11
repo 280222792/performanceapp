@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 绩效承诺书管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">📊</div>
+                <h1>绩效承诺书管理</h1>
+                <p class="login-subtitle">Performance Commitment Document Management</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="user_id">工号</label>
+                    <input
+                        type="text"
+                        id="user_id"
+                        name="user_id"
+                        placeholder="请输入8位工号"
+                        maxlength="8"
+                        pattern="[0-9]{8}"
+                        autocomplete="off"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="请输入密码"
+                        autocomplete="off"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="login-btn">登 录</button>
+            </form>
+
+            <div class="login-footer">
+                <p>仅限授权用户登录 · 账号请联系管理员</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

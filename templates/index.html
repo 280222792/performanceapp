@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绩效承诺书管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="user-bar">
+            <span class="user-greeting">👤 <span class="user-name">{{ session.user_name }}</span></span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">退出登录</a>
+        </div>
+        <header>
+            <h1>📊 绩效承诺书管理系统</h1>
+            <p class="subtitle">Performance Commitment Document Management</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="folder-grid">
+            {% for folder in folder_stats %}
+                <a href="{{ url_for('folder_view', folder_name=folder.name) }}" class="folder-card">
+                    <div class="folder-icon">
+                        <span class="icon">{{ '🏢' if '总部' in folder.name else '👤' if folder.name == '大区总' else '📦' if '快递' in folder.name else '🚚' if '货运' in folder.name else '🚉' }}</span>
+                    </div>
+                    <div class="folder-info">
+                        <h2 class="folder-name">{{ folder.name }}</h2>
+                        <div class="folder-meta">
+                            <span class="file-count">{{ folder.total_files }} 个文件</span>
+                            <span class="total-size">{{ folder.total_size }}</span>
+                        </div>
+                        <div class="quarter-badges">
+                            {% for q in folder.quarters %}
+                                <span class="quarter-badge {{ 'has-files' if q.count > 0 else 'empty' }}">
+                                    {{ q.name }} <small>({{ q.count }})</small>
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="folder-arrow">→</div>
+                </a>
+            {% endfor %}
+        </div>
+
+        <footer>
+            <p>上传的文件将原样保存，下载后与原始文件完全一致</p>
+        </footer>
+    </div>
+</body>
+</html>

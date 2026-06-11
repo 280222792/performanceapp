@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ quarter }} · {{ folder_name }} - 绩效承诺书管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="user-bar">
+            <span class="user-greeting">👤 <span class="user-name">{{ session.user_name }}</span></span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">退出登录</a>
+        </div>
+        <header>
+            <nav class="breadcrumb-full">
+                {% for bc in breadcrumbs %}
+                    {% if bc.url %}
+                        <a href="{{ bc.url }}">{{ bc.name }}</a>
+                    {% else %}
+                        <span class="current">{{ bc.name }}</span>
+                    {% endif %}
+                    {% if not loop.last %}<span class="sep">›</span>{% endif %}
+                {% endfor %}
+            </nav>
+            <h1>{{ quarter }} · {{ folder_name }}</h1>
+            <p class="subtitle">{{ files|length }} 个文件 · 共 {{ total_size }}</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h3>📤 上传绩效考核表</h3>
+            <form method="POST" enctype="multipart/form-data" class="upload-form">
+                <div class="file-input-wrapper">
+                    <input type="file" name="files" id="file-input" multiple accept=".xlsx,.xls,.csv" hidden>
+                    <label for="file-input" class="file-select-btn">选择文件</label>
+                    <span id="file-count" class="file-count-hint">支持 Excel (.xlsx, .xls, .csv)</span>
+                </div>
+                <p class="upload-hint">💡 以人员姓名为准：新上传将自动替换您在此文件夹内的旧版本</p>
+                <div id="file-preview" class="file-preview hidden">
+                    <h4>已选择的文件：</h4>
+                    <ul id="file-list"></ul>
+                </div>
+                <button type="submit" class="upload-btn" id="upload-btn" disabled>上传文件</button>
+            </form>
+        </div>
+
+        <!-- File List -->
+        <div class="file-section">
+            <h3>📋 文件列表</h3>
+            {% if files %}
+                <div class="file-table-wrapper">
+                    <table class="file-table">
+                        <thead>
+                            <tr>
+                                <th>文件名</th>
+                                <th>上传人</th>
+                                <th>大小</th>
+                                <th>上传时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in files %}
+                                <tr>
+                                    <td class="file-name-cell">
+                                        <span class="file-icon">📄</span>
+                                        <span title="{{ f.name }}">{{ f.name }}</span>
+                                    </td>
+                                    <td class="uploader-cell">{{ f.uploader }}</td>
+                                    <td class="size-cell">{{ f.size }}</td>
+                                    <td class="date-cell">{{ f.modified }}</td>
+                                    <td class="actions-cell">
+                                        <a href="{{ url_for('download_file', folder_name=folder_name, quarter=quarter, filename=f.name) }}"
+                                           class="btn btn-download" download>
+                                            ⬇ 下载
+                                        </a>
+                                        <form method="POST"
+                                              action="{{ url_for('delete_file', folder_name=folder_name, quarter=quarter, filename=f.name) }}"
+                                              class="delete-form"
+                                              onsubmit="return confirm('确定要删除「{{ f.name }}」吗？此操作不可撤销。')">
+                                            <button type="submit" class="btn btn-delete">🗑 删除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p>该季度暂无绩效考核表</p>
+                    <p class="empty-hint">请使用上方的上传功能添加文件</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <footer>
+            <p>上传的文件将原样保存，下载后与原始文件完全一致</p>
+        </footer>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const filePreview = document.getElementById('file-preview');
+        const fileList = document.getElementById('file-list');
+        const fileCount = document.getElementById('file-count');
+        const uploadBtn = document.getElementById('upload-btn');
+
+        fileInput.addEventListener('change', function() {
+            const files = this.files;
+            if (files.length === 0) {
+                filePreview.classList.add('hidden');
+                uploadBtn.disabled = true;
+                fileCount.textContent = '支持 Excel (.xlsx, .xls, .csv)';
+                return;
+            }
+
+            filePreview.classList.remove('hidden');
+            uploadBtn.disabled = false;
+            fileCount.textContent = '已选择 ' + files.length + ' 个文件';
+
+            fileList.innerHTML = '';
+            let totalSize = 0;
+            for (let i = 0; i < files.length; i++) {
+                totalSize += files[i].size;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="pf-name">${files[i].name}</span>
+                    <span class="pf-size">${formatSize(files[i].size)}</span>
+                `;
+                fileList.appendChild(li);
+            }
+        });
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + units[i];
+        }
+    </script>
+</body>
+</html>

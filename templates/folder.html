@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ folder_name }} - 绩效承诺书管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="user-bar">
+            <span class="user-greeting">👤 <span class="user-name">{{ session.user_name }}</span></span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">退出登录</a>
+        </div>
+        <header>
+            <div class="breadcrumb">
+                <a href="{{ url_for('index') }}">← 返回首页</a>
+            </div>
+            <h1>{{ folder_name }}</h1>
+            <p class="subtitle">选择季度查看或上传绩效考核表</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="quarter-grid">
+            {% for q in quarters_data %}
+                <a href="{{ url_for('quarter_view', folder_name=folder_name, quarter=q.name) }}" class="quarter-card">
+                    <div class="quarter-header">
+                        <span class="quarter-label">{{ q.name }}</span>
+                    </div>
+                    <div class="quarter-body">
+                        <div class="quarter-stat">
+                            <span class="stat-number">{{ q.file_count }}</span>
+                            <span class="stat-label">个文件</span>
+                        </div>
+                        <div class="quarter-stat">
+                            <span class="stat-number">{{ q.total_size }}</span>
+                            <span class="stat-label">总大小</span>
+                        </div>
+                    </div>
+                    {% if q.files %}
+                        <div class="quarter-preview">
+                            {% for f in q.files[:3] %}
+                                <div class="preview-file" title="{{ f.name }}">
+                                    📄 {{ f.name[:20] }}{% if f.name|length > 20 %}…{% endif %}
+                                    <span class="preview-size">({{ f.size }})</span>
+                                </div>
+                            {% endfor %}
+                            {% if q.files|length > 3 %}
+                                <div class="preview-more">…还有 {{ q.files|length - 3 }} 个文件</div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="quarter-empty">暂无文件</div>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+
+        <footer>
+            <p>上传的文件将原样保存，下载后与原始文件完全一致</p>
+        </footer>
+    </div>
+</body>
+</html>
